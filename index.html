@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scrape - by syed</title>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+        integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lettering.js/0.6.1/jquery.lettering.min.js"></script>
+</head>
+
+<body>
+    <button id="fetchButton" style="height: 50px; width: 200px; background-color: #6f6; border-radius: 20px; font-weight: 600; font-size: 20px;font-family: 'Source Code Pro', monospace;">Scrape</button>
+    <div class="word" id="word" hidden>LOADING...</div>
+    <!-- <div class="overlay"></div> -->
+</body>
+<script>
+    function Ticker(elem) {
+        elem.lettering();
+        this.done = false;
+        this.cycleCount = 5;
+        this.cycleCurrent = 0;
+        this.chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!@#$%^&*()-_=+{}|[]\\;\':"<>?,./`~'.split('');
+        this.charsCount = this.chars.length;
+        this.letters = elem.find('span');
+        this.letterCount = this.letters.length;
+        this.letterCurrent = 0;
+
+        this.letters.each(function () {
+            var $this = $(this);
+            $this.attr('data-orig', $this.text());
+            $this.text('-');
+        });
+    }
+
+    Ticker.prototype.getChar = function () {
+        return this.chars[Math.floor(Math.random() * this.charsCount)];
+    };
+
+    Ticker.prototype.reset = function () {
+        this.done = false;
+        this.cycleCurrent = 0;
+        this.letterCurrent = 0;
+        this.letters.each(function () {
+            var $this = $(this);
+            $this.text($this.attr('data-orig'));
+            $this.removeClass('done');
+        });
+        this.loop();
+    };
+
+    Ticker.prototype.loop = function () {
+        var self = this;
+
+        this.letters.each(function (index, elem) {
+            var $elem = $(elem);
+            if (index >= self.letterCurrent) {
+                if ($elem.text() !== ' ') {
+                    $elem.text(self.getChar());
+                    $elem.css('opacity', Math.random());
+                }
+            }
+        });
+
+        if (this.cycleCurrent < this.cycleCount) {
+            this.cycleCurrent++;
+        } else if (this.letterCurrent < this.letterCount) {
+            var currLetter = this.letters.eq(this.letterCurrent);
+            this.cycleCurrent = 0;
+            currLetter.text(currLetter.attr('data-orig')).css('opacity', 1).addClass('done');
+            this.letterCurrent++;
+        } else {
+            this.done = true;
+        }
+
+        if (!this.done) {
+            requestAnimationFrame(function () {
+                self.loop();
+            });
+        } else {
+            setTimeout(function () {
+                self.reset();
+            }, 750);
+        }
+    };
+
+    $words = $('.word');
+
+    $words.each(function () {
+        var $this = $(this),
+            ticker = new Ticker($this).reset();
+        $this.data('ticker', ticker);
+    });
+    function fetchDataAndRender() {
+        console.log('clicked');
+        const wordElement = document.getElementById('word');
+        wordElement.style.display = 'block';
+    fetch('https://kr-scrape2-471m.onrender.com/scrape') // Replace with your API endpoint
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok.');
+        }
+        return response.json();
+      })
+      .then(data => {
+        // Render the data in the body tag
+        const bodyTag = document.querySelector('body');
+        const dataParagraph = document.createElement('p');
+        dataParagraph.textContent = JSON.stringify(data);
+        bodyTag.appendChild(dataParagraph);
+      })
+      .catch(error => {
+        console.error('There was a problem fetching the data:', error);
+      });
+  }
+  const fetchButton = document.getElementById('fetchButton');
+  fetchButton.addEventListener('click', fetchDataAndRender);
+  // Call the function to fetch data and render it
+</script>
+
+</html>
